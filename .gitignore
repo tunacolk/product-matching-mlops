@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+data/
+*.pt
+*.bin
+*.safetensors
+mlruns/
+.env
+.ipynb_checkpoints/
