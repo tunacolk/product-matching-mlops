@@ -1,6 +1,7 @@
 import logging
 import time
 from contextlib import asynccontextmanager
+import os
 
 from fastapi import FastAPI
 
@@ -15,14 +16,15 @@ state = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Model ve katalog yükleniyor...")
-    state["matcher"] = HybridMatcher(
-        model_path="models/minilm-finetuned",
-        catalog_csv="data/Buy.csv",
-        abt_csv="data/Abt.csv",
-        alpha=0.5,
-    )
-    logger.info("Hazır. Katalog boyutu: %d", len(state["matcher"].ids))
+    if os.getenv("SKIP_MODEL_LOAD") != "1":
+        logger.info("Model ve katalog yükleniyor...")
+        state["matcher"] = HybridMatcher(
+            model_path="models/minilm-finetuned",
+            catalog_csv="data/Buy.csv",
+            abt_csv="data/Abt.csv",
+            alpha=0.5,
+        )
+        logger.info("Hazır. Katalog boyutu: %d", len(state["matcher"].ids))
     yield
     state.clear()
 
