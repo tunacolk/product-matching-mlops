@@ -55,15 +55,24 @@ Hybrid validation P@1 was 0.892, consistent with test (0.896).
 
 ![MLflow](docs/mlflow_final.png)
 
+## Monitoring
+
+Every `/match` request is indexed into Elasticsearch (query, latency, top-1 score,
+score gap between the top two candidates, backend) and can be explored in Kibana.
+Writes happen in a background task, so an Elasticsearch outage never affects API responses.
+
+Scope: request-level logging only. Logstash/Filebeat, alerting and automated drift detection
+are not implemented. Security is disabled in the compose file (local development only).
+
 ## Latency
 
 200 sequential requests (after 20 warm-up), top_k=5, CPU container, Windows + Docker Desktop,
 1,092-product catalog. Single-user latency, not a throughput benchmark.
 
-| | p50 | p95 |
+| Setup | End-to-end p50 / p95 | Server-side p50 / p95 |
 |---|---|---|
-| End-to-end | 60.7 ms | 69.2 ms |
-| Server-side | 15.8 ms | 24.6 ms |
+| Milvus backend | 60.7 / 69.2 ms | 15.8 / 24.6 ms |
+| Milvus + Elasticsearch/Kibana running | 67.0 / 81.3 ms | 22.0 / 46.1 ms |
 
 ## Run it
 
@@ -73,8 +82,12 @@ pip install -r requirements.txt
 python -m src.training.finetune          # train
 python -m src.matching.index_milvus      # index catalog into Milvus
 
+```bash
 docker compose -f milvus-compose.yml up -d
-docker compose up --build api
+docker compose -f elk-compose.yml up -d
+python -m src.matching.index_milvus
+docker compose up --build -d api
+```
 ```
 
 ```bash
@@ -86,7 +99,7 @@ Data (Abt-Buy CSVs) is not included; place it in `data/`.
 
 ## Stack
 
-Python, Sentence-Transformers, PyTorch, scikit-learn, Milvus, FastAPI, MLflow (SQLite),
+Python, Sentence-Transformers, PyTorch, scikit-learn, Milvus, FastAPI, MLflow (SQLite), Elasticsearch, Kibana
 Docker Compose, pytest, GitHub Actions.
 
 ## Tests

@@ -11,14 +11,19 @@ services:
       - HF_HUB_OFFLINE=1
       - MATCHER_BACKEND=milvus
       - MILVUS_URI=http://milvus-standalone:19530
+      - ES_URL=http://elasticsearch:9200
     volumes:
       - ./models:/app/models:ro
       - ./data:/app/data:ro
     networks:
       - default
       - milvus
+      - elk
 
 networks:
   milvus:
     external: true
     name: milvus
+  elk:
+    external: true
+    name: elk

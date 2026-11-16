@@ -2,6 +2,8 @@ import logging
 import time
 from contextlib import asynccontextmanager
 import os
+from fastapi import BackgroundTasks, FastAPI
+from src.api.monitoring import build_doc, log_request
 
 from fastapi import FastAPI
 
@@ -49,10 +51,13 @@ def health():
 
 
 @app.post("/match", response_model=MatchResponse)
-def match(req: MatchRequest):
+def match(req: MatchRequest, background_tasks: BackgroundTasks):
     start = time.perf_counter()
     candidates = state["matcher"].match(req.title, req.top_k)
     latency_ms = (time.perf_counter() - start) * 1000
     logger.info("match title=%r top1=%s latency_ms=%.1f",
                 req.title, candidates[0]["score"] if candidates else None, latency_ms)
+    background_tasks.add_task(
+        log_request, build_doc(req.title, req.top_k, candidates, latency_ms)
+    )
     return MatchResponse(query=req.title, candidates=candidates, latency_ms=latency_ms)
