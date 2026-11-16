@@ -29,22 +29,19 @@ def split_abt_ids(abt, truth, seed=42):
 
 
 def evaluate(sim, abt_ids, buy_ids, truth, subset=None):
-    """sim: (n_abt, n_buy) benzerlik matrisi. subset verilirse sadece o Abt id'leri değerlendirilir."""
-    res = {}
-    for k in (1, 5, 10):
-        hit, total = 0, 0
-        for i, aid in enumerate(abt_ids):
-            if aid not in truth or (subset is not None and aid not in subset):
-                continue
-            top = buy_ids[np.argsort(-sim[i])[:k]]
-            hit += len(set(top) & truth[aid])
-            total += len(truth[aid])
-        res[f"R@{k}"] = hit / total
-    correct, n = 0, 0
+    """sim: (n_abt, n_buy). subset verilirse sadece o Abt id'leri değerlendirilir."""
+    hits = {1: 0, 5: 0, 10: 0}
+    total, n, correct = 0, 0, 0
     for i, aid in enumerate(abt_ids):
         if aid not in truth or (subset is not None and aid not in subset):
             continue
+        order = np.argsort(-sim[i], kind="stable")[:10]  # tek sıralama, sabit eşitlik çözümü
+        ranked = buy_ids[order]
         n += 1
-        correct += int(buy_ids[sim[i].argmax()] in truth[aid])
+        total += len(truth[aid])
+        for k in hits:
+            hits[k] += len(set(ranked[:k]) & truth[aid])
+        correct += int(ranked[0] in truth[aid])
+    res = {f"R@{k}": hits[k] / total for k in hits}
     res["P@1"] = correct / n
     return res
