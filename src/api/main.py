@@ -17,13 +17,24 @@ state = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if os.getenv("SKIP_MODEL_LOAD") != "1":
-        logger.info("Model ve katalog yükleniyor...")
-        state["matcher"] = HybridMatcher(
-            model_path="models/minilm-finetuned",
-            catalog_csv="data/Buy.csv",
-            abt_csv="data/Abt.csv",
-            alpha=0.5,
-        )
+        backend = os.getenv("MATCHER_BACKEND", "numpy")
+        logger.info("Model ve katalog yükleniyor (backend=%s)...", backend)
+        if backend == "milvus":
+            from src.matching.milvus_matcher import MilvusMatcher
+            state["matcher"] = MilvusMatcher(
+                model_path="models/minilm-finetuned",
+                catalog_csv="data/Buy.csv",
+                abt_csv="data/Abt.csv",
+                uri=os.getenv("MILVUS_URI", "http://localhost:19530"),
+                alpha=0.5,
+            )
+        else:
+            state["matcher"] = HybridMatcher(
+                model_path="models/minilm-finetuned",
+                catalog_csv="data/Buy.csv",
+                abt_csv="data/Abt.csv",
+                alpha=0.5,
+            )
         logger.info("Hazır. Katalog boyutu: %d", len(state["matcher"].ids))
     yield
     state.clear()
