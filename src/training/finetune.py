@@ -1,5 +1,7 @@
+import os
+os.environ["MLFLOW_EXPERIMENT_NAME"] = "abt-buy-product-matching"
+os.environ["MLFLOW_TRACKING_URI"] = "sqlite:///mlflow.db"
 import random
-
 from datasets import Dataset
 from sentence_transformers import (
     SentenceTransformer,
@@ -40,7 +42,8 @@ args = SentenceTransformerTrainingArguments(
     batch_sampler=BatchSamplers.NO_DUPLICATES,
     save_strategy="no",
     logging_steps=10,
-    report_to="none",
+    report_to="mlflow",
+    run_name="minilm-finetune",
 )
 
 trainer = SentenceTransformerTrainer(

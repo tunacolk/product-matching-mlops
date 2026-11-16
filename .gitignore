@@ -8,3 +8,5 @@ mlruns/
 .env
 .ipynb_checkpoints/
 models/
+mlflow.db
+mlruns/
