@@ -1,0 +1,1 @@
+![CI](https://github.com/tunacolk/product-matching-mlops/actions/workflows/ci.yml/badge.svg)
